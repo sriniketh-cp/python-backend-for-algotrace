@@ -20,11 +20,14 @@ app.add_middleware(
 )
 
 
+MAX_STEPS_CAP = 500
+
+
 class TraceRequest(BaseModel):
     code: str = Field(..., description="Raw Python source code to execute and trace.")
     max_steps: int | None = Field(
-        default=None, ge=1, le=MAX_STEPS_DEFAULT,
-        description="Optional override for step cap (hard-capped at 50).",
+        default=None, ge=1, le=MAX_STEPS_CAP,
+        description="Optional override for step cap (up to 500 steps).",
     )
 
 
@@ -53,7 +56,7 @@ def trace(request: TraceRequest):
         raise HTTPException(status_code=400, detail="`code` must not be empty.")
 
     step_cap = request.max_steps or MAX_STEPS_DEFAULT
-    step_cap = min(step_cap, MAX_STEPS_DEFAULT)  # never allow exceeding the hard cap
+    step_cap = min(step_cap, MAX_STEPS_CAP)  # cap at 500 steps
 
     try:
         result = trace_code(
